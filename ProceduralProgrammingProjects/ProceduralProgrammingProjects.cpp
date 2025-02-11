@@ -2,19 +2,104 @@
 //
 
 #include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <string>
 
-int main()
-{
-    std::cout << "Hello World!\n";
+using namespace std;
+
+const int MAX_STUDENTS = 100;
+const int MAX_TEST_SCORES = 100;
+
+string studentNames[MAX_STUDENTS];
+double testScores[MAX_STUDENTS][MAX_TEST_SCORES];
+double averages[MAX_STUDENTS];
+
+int numStudents = 0;
+int numTestScores = 0;
+
+void readData(ifstream& inputFile);
+void calculateAverages();
+char calculateLetterGrade(double average);
+void reportCard();
+
+int main() {
+    ifstream inputFile("StudentGrades.txt");
+    if (!inputFile) {
+        cout << "Error opening file! Check path and file name." << endl;
+        return 1;
+    }
+
+    readData(inputFile);
+    inputFile.close();
+
+    calculateAverages();
+    reportCard();
+
+    return 0;
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
+void readData(ifstream& inputFile) {
+    numStudents = 0;
+    string name;
+    double score;
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+    while (inputFile >> name) {
+        studentNames[numStudents] = name;
+        int i = 0;
+
+        // Read test scores until end of line or maximum test scores
+        while (i < MAX_TEST_SCORES && inputFile >> score) {
+            testScores[numStudents][i] = score;
+            i++;
+            if (inputFile.peek() == '\n' || inputFile.peek() == EOF) {
+                break;
+            }
+        }
+
+        // Base number of scores on the first student's scores
+        if (numTestScores == 0) {
+            numTestScores = i;
+        }
+
+        numStudents++;
+    }
+}
+// Iterate through the array of students and the array of test scores, calculating averages per student.
+void calculateAverages() {
+    for (int i = 0; i < numStudents; i++) {
+        double total = 0;
+        for (int j = 0; j < numTestScores; j++) {
+            total += testScores[i][j];
+        }
+        if (numTestScores != 0) {
+            averages[i] = total / numTestScores;
+        }
+        else {
+            averages[i] = 0; // In case of division by zero
+        }
+    }
+}
+
+char calculateLetterGrade(double average) {
+    if (average >= 90) return 'A';
+    else if (average >= 80) return 'B';
+    else if (average >= 70) return 'C';
+    else if (average >= 60) return 'D';
+    else return 'F';
+}
+
+
+// Report formatting
+void reportCard() {
+    cout << left << setw(20) << "Student Name"
+        << setw(10) << "Average"
+        << setw(10) << "Grade" << endl;
+    cout << "**************************************" << endl;
+    // Loop through the studentNames array based on the numStudents value to output names, averages, and letter grade.
+    for (int i = 0; i < numStudents; i++) {
+        cout << left << setw(20) << studentNames[i]
+            << setw(10) << fixed << setprecision(2) << averages[i]
+            << setw(10) << calculateLetterGrade(averages[i]) << endl;
+    }
+}
